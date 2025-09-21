@@ -1,0 +1,118 @@
+[
+    {
+        "description": "Groups cars by their 'maker' and counts the total number of cars for each maker.",
+        "query": "db.cars.aggregate([ { $group: { _id: '$maker', totalCars: { $sum: 1 } } } ])"
+    },
+    {
+        "description": "Calculates the average price of cars for each maker.",
+        "query": "db.cars.aggregate([ { $group: { _id: '$maker', AvgPrice: { $avg: '$price' } } } ])"
+    },
+    {
+        "description": "Counts the number of cars for each 'fuel_type' (e.g., Petrol, Diesel).",
+        "query": "db.cars.aggregate([ { $group: { _id: '$fuel_type', TotalCars: { $sum: 1 } } } ])"
+    },
+    {
+        "description": "Finds all Hyundai cars where the engine capacity ('engine.cc') is greater than 1200.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai', 'engine.cc': { $gt: 1200 } } } ])"
+    },
+    {
+        "description": "Counts the total number of cars that are made by Hyundai.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $count: 'Total_Cars' } ])"
+    },
+    {
+        "description": "Finds all Hyundai cars and then groups them by their 'fuel_type', providing a count for each type.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $group: { _id: '$fuel_type', TotalCars: { $sum: 1 } } } ])"
+    },
+    {
+        "description": "Projects only the 'maker', 'model', and 'fuel_type' fields for Hyundai cars, excluding the default '_id'.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $project: { maker: 1, model: 1, fuel_type: 1, _id: 0 } } ])"
+    },
+    {
+        "description": "Projects specific fields for Hyundai cars and then sorts the results by the 'model' name in ascending order (A-Z).",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $project: { maker: 1, model: 1, fuel_type: 1, _id: 0 } }, { $sort: { model: 1 } } ])"
+    },
+    {
+        "description": "Groups cars by maker, counts them, and then sorts the makers by the total car count in ascending order.",
+        "query": "db.cars.aggregate([ { $group: { _id: '$maker', TotalCars: { $sum: 1 } } }, { $sort: { TotalCars: 1 } } ])"
+    },
+    {
+        "description": "[String Operator] Concatenates the 'maker' and 'model' fields into a new field called 'CarName'.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $project: { _id: 0, CarName: { $concat: ['$maker', ' ', '$model'] } } } ])"
+    },
+    {
+        "description": "[String Operator] Converts the 'model' name of all Hyundai cars to uppercase.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $project: { _id: 0, model: { $toUpper: '$model' } } } ])"
+    },
+    {
+        "description": "[String Operator] Creates a new 'CarName' field and converts the entire concatenated string to uppercase.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $project: { _id: 0, CarName: { $toUpper: { $concat: ['$maker', ' ', '$model'] } } } } ])"
+    },
+    {
+        "description": "Deconstructs the 'owners' array, creating a separate document for each element in the array.",
+        "query": "db.cars.aggregate([ { $unwind: '$owners' } ])"
+    },
+    {
+        "description": "Adds a boolean field 'is_diesel' that is true if the 'fuel_type' field contains the substring 'Die'.",
+        "query": "db.cars.aggregate([ { $project: { _id: 0, model: 1, fuel_type: 1, is_diesel: { $regexMatch: { input: '$fuel_type', regex: 'Die' } } } } ])"
+    },
+    {
+        "description": "Stores the result of an aggregation in a new collection named 'hyundai_cars_data'.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $project: { _id: 0, CarName: { $concat: ['$maker', ' ', '$model'] } } }, { $out: 'hyundai_cars_data' } ])"
+    },
+    {
+        "description": "[Arithmetic Operator] Creates a 'hike_price' field by adding 500 to the original 'price'.",
+        "query": "db.cars.aggregate([ { $project: { _id: 0, model: 1, price: 1, hike_price: { $add: ['$price', 500] } } } ])"
+    },
+    {
+        "description": "[Arithmetic Operator] Adds a new field 'price_in_lakhs' by dividing the 'price' by 100,000.",
+        "query": "db.cars.aggregate([ { $project: { _id: 0, model: 1, price: 1 } }, { $addFields: { price_in_lakhs: { $divide: ['$price', 100000] } } } ])"
+    },
+    {
+        "description": "[Arithmetic Operator] Adds a formatted 'price_in_lakhs' field, converting the number to a string and appending ' lakhs'.",
+        "query": "db.cars.aggregate([ { $project: { _id: 0, model: 1, price: 1 } }, { $addFields: { price_in_lakhs: { $concat: [ { $toString: { $divide: ['$price', 100000] } }, ' lakhs' ] } } } ])"
+    },
+    {
+        "description": "[Arithmetic Operator] Calculates 'price_in_lakhs' and rounds the result to one decimal place.",
+        "query": "db.cars.aggregate([ { $project: { _id: 0, model: 1, price: 1 } }, { $addFields: { price_in_lakhs: { $round: [ { $divide: ['$price', 9000] }, 1 ] } } } ])"
+    },
+    {
+        "description": "For each Hyundai, calculates the 'total_service_cost' by summing up all values in the 'service_history.cost' array.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $set: { total_service_cost: { $sum: '$service_history.cost' } } }, { $project: { _id: 0, model: 1, maker: 1, total_service_cost: 1 } } ])"
+    },
+    {
+        "description": "Calculates total service cost and formats it as a string in thousands (e.g., '15.5 K').",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $set: { total_service_cost: { $sum: '$service_history.cost' } } }, { $project: { maker: 1, _id: 0, model: 1, total_service_cost: { $concat: [ { $toString: { $divide: ['$total_service_cost', 1000] } }, ' K' ] } } } ])"
+    },
+    {
+        "description": "[Conditional] Uses an if-then-else condition to categorize cars as 'Petrol Car' or 'Non Petrol Car'.",
+        "query": "db.cars.aggregate([ { $project: { _id: 0, maker: 1, model: 1, fuel_type: { $cond: { if: { $eq: [ '$fuel_type', 'Petrol' ] }, then: 'Petrol Car', else: 'Non Petrol Car' } } } } ])"
+    },
+    {
+        "description": "[Conditional] Uses a switch statement to categorize cars into 'Budget', 'Mid Range', or 'Premium' based on their price.",
+        "query": "db.cars.aggregate([ { $project: { _id: 0, model: 1, maker: 1, priceCategory: { $switch: { branches: [ { case: { $lt: ['$price', 500000] }, then: 'Budget' }, { case: { $and: [ { $gte: ['$price', 500000] }, { $lt: ['$price', 1000000] } ] }, then: 'Mid Range' }, { case: { $gte: ['$price', 1000000] }, then: 'Premium' } ], default: 'Can\\'t afford' } } } } ])"
+    },
+    {
+        "description": "[Update Operation] A standalone command to update the price of a specific car (Hyundai Creta).",
+        "query": "db.cars.updateOne({ maker: 'Hyundai', model: 'Creta' }, { $set: { price: 350000 } })"
+    },
+    {
+        "description": "[System Variable] Projects the current server date and time ('$$NOW') for each matching document.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $project: { model: 1, maker: 1, _id: 0, Today: '$$NOW' } } ])"
+    },
+    {
+        "description": "[User Variable] Calculates total service cost and then uses a custom variable ('$$totalCost') within a '$let' block to conditionally label it as 'High' or 'Low'.",
+        "query": "db.cars.aggregate([ { $match: { maker: 'Hyundai' } }, { $set: { total_service_cost: { $sum: '$service_history.cost' } } }, { $project: { maker: 1, model: 1, total_service_cost: 1, cost_status: { $let: { vars: { totalCost: '$total_service_cost' }, in: { $cond: { if: { $gte: [ '$$totalCost', 10000 ] }, then: 'High', else: 'Low' } } } } } }, { $sort: { model: 1, total_service_cost: 1 } } ])"
+    },
+    {
+        "description": "[Join] Performs a left outer join from the 'users' collection to the 'orders' collection to find all orders associated with each user.",
+        "query": "db.users.aggregate([ { '$lookup': { 'from': 'orders', 'localField': '_id', 'foreignField': 'user_id', 'as': 'orders' } } ])"
+    },
+    {
+        "description": "[Schema Validation] Creates a new collection 'users_validation' with a schema requiring 'name' (string) and 'phone' (integer).",
+        "query": "db.createCollection('users_validation', { validator: { $jsonSchema: { bsonType: 'object', required: ['name', 'phone'], properties: { name: { bsonType: 'string', description: 'must be a string and required' }, phone: { bsonType: 'integer', description: 'must be an integer and required' } } } }, validationLevel: 'strict', validationAction: 'error' })"
+    },
+    {
+        "description": "[Schema Validation] Modifies an existing collection 'users' to add or update its schema validation rules.",
+        "query": "db.runCommand({ collMod: 'users', validator: { $jsonSchema: { bsonType: 'object', required: ['name', 'email'], properties: { name: { bsonType: 'string', description: 'must be a string and required' }, email: { bsonType: 'string', description: 'must be a string and required' } } } }, validationLevel: 'strict', validationAction: 'error' })"
+    }
+]
